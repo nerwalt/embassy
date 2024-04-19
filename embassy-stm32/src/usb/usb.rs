@@ -262,6 +262,35 @@ impl<'d, T: Instance> Driver<'d, T> {
 
         let regs = T::regs();
 
+        #[cfg(any(stm32l5, stm32wb))]
+        crate::pac::PWR.cr2().modify(|w| w.set_usv(true));
+
+        #[cfg(pwr_h5)]
+        crate::pac::PWR.usbscr().modify(|w| w.set_usb33sv(true));
+
+        #[cfg(stm32u5)]
+        {
+            // Enable USB power
+            critical_section::with(|_| {
+                crate::pac::PWR.svmcr().modify(|w| {
+                    w.set_usv(true);
+                    w.set_uvmen(true);
+                })
+            });
+
+            // Wait for USB power to stabilize
+            while !crate::pac::PWR.svmsr().read().vddusbrdy() {}
+
+            // Select HSI48 as USB clock source.
+            critical_section::with(|_| {
+                crate::pac::RCC.ccipr1().modify(|w| {
+                    w.set_iclksel(crate::pac::rcc::vals::Iclksel::HSI48);
+                })
+            });
+        }
+
+        <T as RccPeripheral>::enable_and_reset();
+
         regs.cntr().write(|w| {
             w.set_pdwn(false);
             w.set_fres(true);
