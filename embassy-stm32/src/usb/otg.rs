@@ -10,10 +10,10 @@ use embassy_usb_synopsys_otg::{
     PhyType, State,
 };
 
-use crate::gpio::AFType;
+use crate::gpio::{AfType, OutputType, Speed};
 use crate::interrupt;
 use crate::interrupt::typelevel::Interrupt;
-use crate::rcc::{RccPeripheral, SealedRccPeripheral};
+use crate::rcc::{self, RccPeripheral};
 
 const MAX_EP_COUNT: usize = 9;
 
@@ -39,9 +39,7 @@ macro_rules! config_ulpi_pins {
         into_ref!($($pin),*);
         critical_section::with(|_| {
             $(
-                $pin.set_as_af($pin.af_num(), AFType::OutputPushPull);
-                #[cfg(gpio_v2)]
-                $pin.set_speed(crate::gpio::Speed::VeryHigh);
+                $pin.set_as_af($pin.af_num(), AfType::output(OutputType::PushPull, Speed::VeryHigh));
             )*
         })
     };
@@ -77,8 +75,8 @@ impl<'d, T: Instance> Driver<'d, T> {
     ) -> Self {
         into_ref!(dp, dm);
 
-        dp.set_as_af(dp.af_num(), AFType::OutputPushPull);
-        dm.set_as_af(dm.af_num(), AFType::OutputPushPull);
+        dp.set_as_af(dp.af_num(), AfType::output(OutputType::PushPull, Speed::VeryHigh));
+        dm.set_as_af(dm.af_num(), AfType::output(OutputType::PushPull, Speed::VeryHigh));
 
         let regs = T::regs();
 
@@ -246,7 +244,7 @@ impl<'d, T: Instance> Bus<'d, T> {
     fn disable(&mut self) {
         T::Interrupt::disable();
 
-        <T as SealedRccPeripheral>::disable();
+        rcc::disable::<T>();
         self.inited = false;
 
         #[cfg(stm32l4)]
@@ -371,7 +369,7 @@ foreach_interrupt!(
                 } else if #[cfg(stm32g0x1)] {
                     const FIFO_DEPTH_WORDS: u16 = 512;
                     const ENDPOINT_COUNT: usize = 8;
-                } else if #[cfg(stm32h7)] {
+                } else if #[cfg(any(stm32h7, stm32h7rs))] {
                     const FIFO_DEPTH_WORDS: u16 = 1024;
                     const ENDPOINT_COUNT: usize = 9;
                 } else if #[cfg(stm32u5)] {
@@ -420,7 +418,7 @@ foreach_interrupt!(
                     stm32f469,
                     stm32f479,
                     stm32f7,
-                    stm32h7,
+                    stm32h7, stm32h7rs,
                 ))] {
                     const FIFO_DEPTH_WORDS: u16 = 1024;
                     const ENDPOINT_COUNT: usize = 9;
