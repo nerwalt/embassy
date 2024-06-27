@@ -1,18 +1,16 @@
+// required-features: easydma
 #![no_std]
 #![no_main]
-teleprobe_meta::target!(b"nrf52840-dk");
 
-use defmt::{assert_eq, *};
+#[path = "../common.rs"]
+mod common;
+
+use defmt::{panic, *};
 use embassy_executor::Spawner;
 use embassy_futures::join::join;
-use embassy_nrf::buffered_uarte::{self, BufferedUarteRx, BufferedUarteTx};
-use embassy_nrf::{bind_interrupts, peripherals, uarte};
+use embassy_nrf::buffered_uarte::{self, BufferedUarte};
+use embassy_nrf::{peripherals, uarte};
 use {defmt_rtt as _, panic_probe as _};
-
-bind_interrupts!(struct Irqs {
-    UARTE0_UART0 => buffered_uarte::InterruptHandler<peripherals::UARTE0>;
-    UARTE1 => buffered_uarte::InterruptHandler<peripherals::UARTE1>;
-});
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -26,25 +24,27 @@ async fn main(_spawner: Spawner) {
 
     // test teardown + recreate of the buffereduarte works fine.
     for _ in 0..2 {
-        const COUNT: usize = 40_000;
-
-        let mut tx = BufferedUarteTx::new(&mut p.UARTE1, Irqs, &mut p.P1_02, config.clone(), &mut tx_buffer);
-
-        let mut rx = BufferedUarteRx::new(
-            &mut p.UARTE0,
+        let u = BufferedUarte::new(
+            &mut peri!(p, UART0),
             &mut p.TIMER0,
             &mut p.PPI_CH0,
             &mut p.PPI_CH1,
             &mut p.PPI_GROUP0,
-            Irqs,
-            &mut p.P1_03,
+            irqs!(UART0_BUFFERED),
+            &mut peri!(p, PIN_A),
+            &mut peri!(p, PIN_B),
             config.clone(),
             &mut rx_buffer,
+            &mut tx_buffer,
         );
 
-        let tx_fut = async {
-            info!("tx initialized!");
+        info!("uarte initialized!");
 
+        let (mut rx, mut tx) = u.split();
+
+        const COUNT: usize = 40_000;
+
+        let tx_fut = async {
             let mut tx_buf = [0; 215];
             let mut i = 0;
             while i < COUNT {
@@ -58,14 +58,14 @@ async fn main(_spawner: Spawner) {
             }
         };
         let rx_fut = async {
-            info!("rx initialized!");
-
             let mut i = 0;
             while i < COUNT {
                 let buf = unwrap!(rx.fill_buf().await);
 
                 for &b in buf {
-                    assert_eq!(b, i as u8);
+                    if b != i as u8 {
+                        panic!("mismatch {} vs {}, index {}", b, i as u8, i);
+                    }
                     i = i + 1;
                 }
 
