@@ -206,6 +206,7 @@ pub const FORCE_COPY_BUFFER_SIZE: usize = 1024;
 pub const FLASH_SIZE: usize = 1536 * 1024;
 
 embassy_hal_internal::peripherals! {
+<<<<<<< HEAD
     // GPIOTE
     GPIOTE20_CH0,
     GPIOTE20_CH1,
@@ -221,6 +222,8 @@ embassy_hal_internal::peripherals! {
     GPIOTE30_CH2,
     GPIOTE30_CH3,
 
+=======
+>>>>>>> 8808b6334 (Adding SPI support)
     // GPIO port P0
     P0_00,
     P0_01,
@@ -426,6 +429,7 @@ impl_ppi_group!(PPI20_GROUP5, pac::DPPIC20, 5);
 // DPPI30 groups
 impl_ppi_group!(PPI30_GROUP0, pac::DPPIC30, 0);
 impl_ppi_group!(PPI30_GROUP1, pac::DPPIC30, 1);
+
 // SPIM
 impl_spim!(SPI00, SPIM00, SERIAL00);
 impl_spim!(TWISPI20, SPIM20, SERIAL20);
@@ -439,18 +443,6 @@ impl_spis!(TWISPI20, SPIS20, SERIAL20);
 impl_spis!(TWISPI21, SPIS21, SERIAL21);
 impl_spis!(TWISPI22, SPIS22, SERIAL22);
 impl_spis!(TWISPI30, SPIS30, SERIAL30);
-
-// TWIM
-impl_twim!(TWISPI20, TWIM20, SERIAL20);
-impl_twim!(TWISPI21, TWIM21, SERIAL21);
-impl_twim!(TWISPI22, TWIM22, SERIAL22);
-impl_twim!(TWISPI30, TWIM30, SERIAL30);
-
-// TWIS
-impl_twis!(TWISPI20, TWIS20, SERIAL20);
-impl_twis!(TWISPI21, TWIS21, SERIAL21);
-impl_twis!(TWISPI22, TWIS22, SERIAL22);
-impl_twis!(TWISPI30, TWIS30, SERIAL30);
 
 #[cfg(feature = "_ns")]
 impl_wdt!(WDT, WDT31, WDT31, 0);
