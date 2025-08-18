@@ -207,3 +207,6 @@ embedded-storage = "0.3.1"
 embedded-storage-async = "0.4.1"
 cfg-if = "1.0.0"
 document-features = "0.2.7"
+
+# Used for nrf54l pac extensions
+extend = "1.2.0"

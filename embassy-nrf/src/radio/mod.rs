@@ -11,7 +11,8 @@
     feature = "nrf52820",
     feature = "nrf52833",
     feature = "nrf52840",
-    feature = "_nrf5340-net"
+    feature = "_nrf5340-net",
+    feature = "_nrf54l",
 ))]
 /// IEEE 802.15.4
 pub mod ieee802154;
@@ -51,7 +52,13 @@ impl<T: Instance> interrupt::typelevel::Handler<T::Interrupt> for InterruptHandl
         let r = T::regs();
         let s = T::state();
         // clear all interrupts
+        #[cfg(not(feature = "_nrf54l"))]
         r.intenclr().write(|w| w.0 = 0xffff_ffff);
+        #[cfg(feature = "_nrf54l")]
+        {
+            r.intenclr(0).write(|w| w.0 = 0xffff_ffff);
+            r.intenclr(1).write(|w| w.0 = 0xffff_ffff);
+        }
         s.event_waker.wake();
     }
 }

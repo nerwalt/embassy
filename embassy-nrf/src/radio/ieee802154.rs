@@ -46,8 +46,12 @@ impl<'d, T: Instance> Radio<'d, T> {
         let r = T::regs();
 
         // Disable and enable to reset peripheral
-        r.power().write(|w| w.set_power(false));
-        r.power().write(|w| w.set_power(true));
+        // TODO - nrf54l ???
+        #[cfg(not(feature = "_nrf54l"))]
+        {
+            r.power().write(|w| w.set_power(false));
+            r.power().write(|w| w.set_power(true));
+        }
 
         // Enable 802.15.4 mode
         r.mode().write(|w| w.set_mode(vals::Mode::IEEE802154_250KBIT));
@@ -115,7 +119,10 @@ impl<'d, T: Instance> Radio<'d, T> {
         self.needs_enable = true;
         r.frequency().write(|w| {
             w.set_frequency(frequency_offset);
+            #[cfg(not(feature = "_nrf54l"))]
             w.set_map(vals::Map::DEFAULT);
+            #[cfg(feature = "_nrf54l")]
+            w.set_map(false);
         });
     }
 
@@ -145,7 +152,13 @@ impl<'d, T: Instance> Radio<'d, T> {
     /// Clear interrupts
     pub fn clear_all_interrupts(&mut self) {
         let r = T::regs();
+        #[cfg(not(feature = "_nrf54l"))]
         r.intenclr().write(|w| w.0 = 0xffff_ffff);
+        #[cfg(feature = "_nrf54l")]
+        {
+            r.intenclr(0).write(|w| w.0 = 0xffff_ffff);
+            r.intenclr(1).write(|w| w.0 = 0xffff_ffff);
+        }
     }
 
     /// Changes the radio transmission power
@@ -153,6 +166,7 @@ impl<'d, T: Instance> Radio<'d, T> {
         let r = T::regs();
         self.needs_enable = true;
 
+        // TODO FIXME - Add un-handled nrf54l values
         let tx_power: TxPower = match power {
             #[cfg(not(any(feature = "nrf52811", feature = "_nrf5340-net")))]
             8 => TxPower::POS8_DBM,
@@ -184,8 +198,10 @@ impl<'d, T: Instance> Radio<'d, T> {
             -7 => TxPower::NEG7_DBM,
             -8 => TxPower::NEG8_DBM,
             -12 => TxPower::NEG12_DBM,
+            #[cfg(not(feature = "_nrf54l"))]
             -16 => TxPower::NEG16_DBM,
             -20 => TxPower::NEG20_DBM,
+            #[cfg(not(feature = "_nrf54l"))]
             -30 => TxPower::NEG30_DBM,
             -40 => TxPower::NEG40_DBM,
             _ => panic!("Invalid transmission power value"),
@@ -327,7 +343,10 @@ impl<'d, T: Instance> Radio<'d, T> {
                 trace!("RX done poll");
                 return Poll::Ready(());
             } else {
+                #[cfg(not(feature = "_nrf54l"))]
                 r.intenset().write(|w| w.set_phyend(true));
+                #[cfg(feature = "_nrf54l")]
+                r.intenset(0).write(|w| w.set_phyend(true));
             };
 
             Poll::Pending
@@ -418,7 +437,13 @@ impl<'d, T: Instance> Radio<'d, T> {
                 return Poll::Ready(TransmitResult::ChannelInUse);
             }
 
+            #[cfg(not(feature = "_nrf54l"))]
             r.intenset().write(|w| {
+                w.set_phyend(true);
+                w.set_ccabusy(true);
+            });
+            #[cfg(feature = "_nrf54l")]
+            r.intenset(0).write(|w| {
                 w.set_phyend(true);
                 w.set_ccabusy(true);
             });
