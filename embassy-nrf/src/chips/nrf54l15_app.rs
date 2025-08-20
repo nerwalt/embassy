@@ -199,7 +199,7 @@ pub mod pac {
 
 /// The maximum buffer size that the EasyDMA can send/recv in one operation.
 pub const EASY_DMA_SIZE: usize = (1 << 16) - 1;
-//pub const FORCE_COPY_BUFFER_SIZE: usize = 1024;
+pub const FORCE_COPY_BUFFER_SIZE: usize = 1024;
 
 // 1.5 MB NVM
 #[allow(unused)]
@@ -319,6 +319,13 @@ embassy_hal_internal::peripherals! {
     // TEMP
     TEMP,
 
+    // TWI/SPI
+    SPI00,
+    TWISPI20,
+    TWISPI21,
+    TWISPI22,
+    TWISPI30,
+
     // WDT
     #[cfg(feature = "_ns")]
     WDT,
@@ -419,6 +426,19 @@ impl_ppi_group!(PPI20_GROUP5, pac::DPPIC20, 5);
 // DPPI30 groups
 impl_ppi_group!(PPI30_GROUP0, pac::DPPIC30, 0);
 impl_ppi_group!(PPI30_GROUP1, pac::DPPIC30, 1);
+// SPIM
+impl_spim!(SPI00, SPIM00, SERIAL00);
+impl_spim!(TWISPI20, SPIM20, SERIAL20);
+impl_spim!(TWISPI21, SPIM21, SERIAL21);
+impl_spim!(TWISPI22, SPIM22, SERIAL22);
+impl_spim!(TWISPI30, SPIM30, SERIAL30);
+
+// SPIS
+impl_spis!(SPI00, SPIS00, SERIAL00);
+impl_spis!(TWISPI20, SPIS20, SERIAL20);
+impl_spis!(TWISPI21, SPIS21, SERIAL21);
+impl_spis!(TWISPI22, SPIS22, SERIAL22);
+impl_spis!(TWISPI30, SPIS30, SERIAL30);
 
 #[cfg(feature = "_ns")]
 impl_wdt!(WDT, WDT31, WDT31, 0);
