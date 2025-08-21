@@ -322,6 +322,18 @@ impl_spis!(TWISPI21, SPIS21, SERIAL21);
 impl_spis!(TWISPI22, SPIS22, SERIAL22);
 impl_spis!(TWISPI30, SPIS30, SERIAL30);
 
+// TWIM
+impl_twim!(TWISPI20, TWIM20, SERIAL20);
+impl_twim!(TWISPI21, TWIM21, SERIAL21);
+impl_twim!(TWISPI22, TWIM22, SERIAL22);
+impl_twim!(TWISPI30, TWIM30, SERIAL30);
+
+// TWIS
+impl_twis!(TWISPI20, TWIS20, SERIAL20);
+impl_twis!(TWISPI21, TWIS21, SERIAL21);
+impl_twis!(TWISPI22, TWIS22, SERIAL22);
+impl_twis!(TWISPI30, TWIS30, SERIAL30);
+
 #[cfg(feature = "_ns")]
 impl_wdt!(WDT, WDT31, WDT31, 0);
 #[cfg(feature = "_s")]
