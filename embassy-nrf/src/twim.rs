@@ -139,10 +139,24 @@ impl<'d, T: Instance> Twim<'d, T> {
         sda.conf().write(|w| {
             w.set_dir(gpiovals::Dir::OUTPUT);
             w.set_input(gpiovals::Input::CONNECT);
+            #[cfg(not(feature = "_nrf54l"))]
             w.set_drive(match config.sda_high_drive {
                 true => gpiovals::Drive::H0D1,
                 false => gpiovals::Drive::S0D1,
             });
+            #[cfg(feature = "_nrf54l")]
+            {
+                match config.sda_high_drive {
+                    true => {
+                        w.set_drive0(gpiovals::Drive::H);
+                        w.set_drive1(gpiovals::Drive::D);
+                    }
+                    false => {
+                        w.set_drive0(gpiovals::Drive::S);
+                        w.set_drive1(gpiovals::Drive::D);
+                    }
+                }
+            }
             if config.sda_pullup {
                 w.set_pull(gpiovals::Pull::PULLUP);
             }
@@ -150,10 +164,24 @@ impl<'d, T: Instance> Twim<'d, T> {
         scl.conf().write(|w| {
             w.set_dir(gpiovals::Dir::OUTPUT);
             w.set_input(gpiovals::Input::CONNECT);
+            #[cfg(not(feature = "_nrf54l"))]
             w.set_drive(match config.scl_high_drive {
                 true => gpiovals::Drive::H0D1,
                 false => gpiovals::Drive::S0D1,
             });
+            #[cfg(feature = "_nrf54l")]
+            {
+                match config.scl_high_drive {
+                    true => {
+                        w.set_drive0(gpiovals::Drive::H);
+                        w.set_drive1(gpiovals::Drive::D);
+                    }
+                    false => {
+                        w.set_drive0(gpiovals::Drive::S);
+                        w.set_drive1(gpiovals::Drive::D);
+                    }
+                }
+            }
             if config.sda_pullup {
                 w.set_pull(gpiovals::Pull::PULLUP);
             }
@@ -206,15 +234,23 @@ impl<'d, T: Instance> Twim<'d, T> {
         // We're giving the register a pointer to the stack. Since we're
         // waiting for the I2C transaction to end before this stack pointer
         // becomes invalid, there's nothing wrong here.
-        r.txd().ptr().write_value(buffer.as_ptr() as u32);
-        r.txd().maxcnt().write(|w|
-            // We're giving it the length of the buffer, so no danger of
-            // accessing invalid memory. We have verified that the length of the
-            // buffer fits in an `u8`, so the cast to `u8` is also fine.
-            //
-            // The MAXCNT field is 8 bits wide and accepts the full range of
-            // values.
-            w.set_maxcnt(buffer.len() as _));
+        #[cfg(not(feature = "_nrf54l"))]
+        {
+            r.txd().ptr().write_value(buffer.as_ptr() as u32);
+            r.txd().maxcnt().write(|w|
+                // We're giving it the length of the buffer, so no danger of
+                // accessing invalid memory. We have verified that the length of the
+                // buffer fits in an `u8`, so the cast to `u8` is also fine.
+                //
+                // The MAXCNT field is 8 bits wide and accepts the full range of
+                // values.
+                w.set_maxcnt(buffer.len() as _));
+        }
+        #[cfg(feature = "_nrf54l")]
+        {
+            r.dma().tx().ptr().write_value(buffer.as_ptr() as u32);
+            r.dma().tx().maxcnt().write(|w| w.set_maxcnt(buffer.len() as _));
+        }
 
         Ok(())
     }
@@ -233,18 +269,26 @@ impl<'d, T: Instance> Twim<'d, T> {
         // We're giving the register a pointer to the stack. Since we're
         // waiting for the I2C transaction to end before this stack pointer
         // becomes invalid, there's nothing wrong here.
-        r.rxd().ptr().write_value(buffer.as_mut_ptr() as u32);
-        r.rxd().maxcnt().write(|w|
-            // We're giving it the length of the buffer, so no danger of
-            // accessing invalid memory. We have verified that the length of the
-            // buffer fits in an `u8`, so the cast to the type of maxcnt
-            // is also fine.
-            //
-            // Note that that nrf52840 maxcnt is a wider
-            // type than a u8, so we use a `_` cast rather than a `u8` cast.
-            // The MAXCNT field is thus at least 8 bits wide and accepts the
-            // full range of values that fit in a `u8`.
-            w.set_maxcnt(buffer.len() as _));
+        #[cfg(not(feature = "_nrf54l"))]
+        {
+            r.rxd().ptr().write_value(buffer.as_mut_ptr() as u32);
+            r.rxd().maxcnt().write(|w|
+                // We're giving it the length of the buffer, so no danger of
+                // accessing invalid memory. We have verified that the length of the
+                // buffer fits in an `u8`, so the cast to the type of maxcnt
+                // is also fine.
+                //
+                // Note that that nrf52840 maxcnt is a wider
+                // type than a u8, so we use a `_` cast rather than a `u8` cast.
+                // The MAXCNT field is thus at least 8 bits wide and accepts the
+                // full range of values that fit in a `u8`.
+                w.set_maxcnt(buffer.len() as _));
+        }
+        #[cfg(feature = "_nrf54l")]
+        {
+            r.dma().rx().ptr().write_value(buffer.as_mut_ptr() as u32);
+            r.dma().rx().maxcnt().write(|w| w.set_maxcnt(buffer.len() as _));
+        }
 
         Ok(())
     }
@@ -277,7 +321,11 @@ impl<'d, T: Instance> Twim<'d, T> {
 
     fn check_rx(&self, len: usize) -> Result<(), Error> {
         let r = T::regs();
-        if r.rxd().amount().read().0 != len as u32 {
+        #[cfg(not(feature = "_nrf54l"))]
+        let rxlen = r.rxd().amount().read().0;
+        #[cfg(feature = "_nrf54l")]
+        let rxlen = r.dma().rx().amount().read().0;
+        if rxlen != len as u32 {
             Err(Error::Receive)
         } else {
             Ok(())
@@ -286,7 +334,11 @@ impl<'d, T: Instance> Twim<'d, T> {
 
     fn check_tx(&self, len: usize) -> Result<(), Error> {
         let r = T::regs();
-        if r.txd().amount().read().0 != len as u32 {
+        #[cfg(not(feature = "_nrf54l"))]
+        let txlen = r.txd().amount().read().0;
+        #[cfg(feature = "_nrf54l")]
+        let txlen = r.dma().tx().amount().read().0;
+        if txlen != len as u32 {
             Err(Error::Transmit)
         } else {
             Ok(())
@@ -407,7 +459,10 @@ impl<'d, T: Instance> Twim<'d, T> {
                 }
 
                 r.shorts().write(|w| {
+                    #[cfg(not(feature = "_nrf54l"))]
                     w.set_lastrx_starttx(true);
+                    #[cfg(feature = "_nrf54l")]
+                    w.set_lastrx_dma_tx_start(true);
                     if stop {
                         w.set_lasttx_stop(true);
                     } else {
@@ -416,7 +471,10 @@ impl<'d, T: Instance> Twim<'d, T> {
                 });
 
                 // Start read+write operation.
+                #[cfg(not(feature = "_nrf54l"))]
                 r.tasks_startrx().write_value(1);
+                #[cfg(feature = "_nrf54l")]
+                r.tasks_dma().rx().start();
                 if last_op.is_some() {
                     r.tasks_resume().write_value(1);
                 }
@@ -424,7 +482,10 @@ impl<'d, T: Instance> Twim<'d, T> {
                 // TODO: Handle empty write buffer
                 if rd_buffer.is_empty() {
                     // With a zero-length buffer, LASTRX doesn't fire (because there's no last byte!), so do the STARTTX ourselves.
+                    #[cfg(not(feature = "_nrf54l"))]
                     r.tasks_starttx().write_value(1);
+                    #[cfg(feature = "_nrf54l")]
+                    r.tasks_dma().tx().start();
                 }
 
                 Ok(2)
@@ -438,7 +499,10 @@ impl<'d, T: Instance> Twim<'d, T> {
                 r.shorts().write(|w| w.set_lastrx_stop(true));
 
                 // Start read operation.
+                #[cfg(not(feature = "_nrf54l"))]
                 r.tasks_startrx().write_value(1);
+                #[cfg(feature = "_nrf54l")]
+                r.tasks_dma().rx().start();
                 if last_op.is_some() {
                     r.tasks_resume().write_value(1);
                 }
@@ -461,11 +525,17 @@ impl<'d, T: Instance> Twim<'d, T> {
 
                 // Start write+read operation.
                 r.shorts().write(|w| {
+                    #[cfg(not(feature = "_nrf54l"))]
                     w.set_lasttx_startrx(true);
+                    #[cfg(feature = "_nrf54l")]
+                    w.set_lasttx_dma_rx_start(true);
                     w.set_lastrx_stop(true);
                 });
 
+                #[cfg(not(feature = "_nrf54l"))]
                 r.tasks_starttx().write_value(1);
+                #[cfg(feature = "_nrf54l")]
+                r.tasks_dma().tx().start();
                 if last_op.is_some() {
                     r.tasks_resume().write_value(1);
                 }
@@ -489,7 +559,10 @@ impl<'d, T: Instance> Twim<'d, T> {
                     }
                 });
 
+                #[cfg(not(feature = "_nrf54l"))]
                 r.tasks_starttx().write_value(1);
+                #[cfg(feature = "_nrf54l")]
+                r.tasks_dma().tx().start();
                 if last_op.is_some() {
                     r.tasks_resume().write_value(1);
                 }
