@@ -3,7 +3,7 @@ use extend::ext;
 
 use crate::pac::common::{Reg, RW, W};
 // use crate::pac::{gpio, pwm, spim, spis, twim, twis, uarte};
-use crate::pac::{gpio, uarte};
+use crate::pac::{gpio, pwm, uarte};
 
 // #[repr(transparent)]
 // #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -317,38 +317,38 @@ pub impl uarte::regs::Int {
 //     }
 // }
 
-// #[ext]
-// pub impl pwm::Pwm {
-//     #[inline(always)]
-//     fn tasks_seqstart(&self, idx: usize) -> Reg<u32, W> {
-//         self.tasks_dma().seq(idx).start()
-//     }
-// }
+#[ext]
+pub impl pwm::Pwm {
+    #[inline(always)]
+    fn tasks_seqstart(&self, idx: usize) -> Reg<u32, W> {
+        self.tasks_dma().seq(idx).start()
+    }
+}
 
-// #[ext]
-// pub impl pwm::regs::Shorts {
-//     #[inline(always)]
-//     fn set_loopsdone_seqstart0(&mut self, val: bool) {
-//         self.set_loopsdone_dma_seq0_start(val)
-//     }
-// }
+#[ext]
+pub impl pwm::regs::Shorts {
+    #[inline(always)]
+    fn set_loopsdone_seqstart0(&mut self, val: bool) {
+        self.set_loopsdone_dma_seq0_start(val)
+    }
+}
 
-// #[ext]
-// pub impl pwm::PwmSeq {
-//     #[inline(always)]
-//     fn parent(&self) -> pwm::Pwm {
-//         unsafe { pwm::Pwm::from_ptr(self.as_ptr().map_addr(|addr| addr & 0xfffff000)) }
-//     }
-//     #[inline(always)]
-//     fn idx(&self) -> usize {
-//         ((self.as_ptr() as usize & 0xfff) - 0x520) / 32
-//     }
-//     #[inline(always)]
-//     fn ptr(&self) -> Reg<u32, RW> {
-//         self.parent().dma().seq(self.idx()).ptr()
-//     }
-//     #[inline(always)]
-//     fn cnt(&self) -> Reg<pwm::regs::Maxcnt, RW> {
-//         self.parent().dma().seq(self.idx()).maxcnt()
-//     }
-// }
+#[ext]
+pub impl pwm::PwmSeq {
+    #[inline(always)]
+    fn parent(&self) -> pwm::Pwm {
+        unsafe { pwm::Pwm::from_ptr(self.as_ptr().map_addr(|addr| addr & 0xfffff000)) }
+    }
+    #[inline(always)]
+    fn idx(&self) -> usize {
+        ((self.as_ptr() as usize & 0xfff) - 0x520) / 32
+    }
+    #[inline(always)]
+    fn ptr(&self) -> Reg<u32, RW> {
+        self.parent().dma().seq(self.idx()).ptr()
+    }
+    #[inline(always)]
+    fn cnt(&self) -> Reg<pwm::regs::Maxcnt, RW> {
+        self.parent().dma().seq(self.idx()).maxcnt()
+    }
+}

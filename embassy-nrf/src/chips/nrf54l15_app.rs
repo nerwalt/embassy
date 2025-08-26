@@ -312,9 +312,17 @@ embassy_hal_internal::peripherals! {
     PPI30_GROUP0,
     PPI30_GROUP1,
 
+    // PWM
+    PWM20,
+    PWM21,
+    PWM22,
+
     #[cfg(feature = "_s")]
     // RRAMC
     RRAMC,
+
+    // SAADC
+    SAADC,
 
     // TEMP
     TEMP,
@@ -441,6 +449,22 @@ impl_ppi_group!(PPI20_GROUP5, pac::DPPIC20, 5);
 impl_ppi_group!(PPI30_GROUP0, pac::DPPIC30, 0);
 impl_ppi_group!(PPI30_GROUP1, pac::DPPIC30, 1);
 
+// PWM
+impl_pwm!(PWM20, PWM20, PWM20);
+impl_pwm!(PWM21, PWM21, PWM21);
+impl_pwm!(PWM22, PWM22, PWM22);
+
+// SAADC 
+// NOTE: SAADC uses "pin" abstraction, not "AIN"
+impl_saadc_input!(P1_04, 1, 4);
+impl_saadc_input!(P1_05, 1, 5);
+impl_saadc_input!(P1_06, 1, 6);
+impl_saadc_input!(P1_07, 1, 7);
+impl_saadc_input!(P1_11, 1, 11);
+impl_saadc_input!(P1_12, 1, 12);
+impl_saadc_input!(P1_13, 1, 13);
+impl_saadc_input!(P1_14, 1, 14);
+
 // SPIM
 impl_spim!(SPI00, SPIM00, SERIAL00);
 impl_spim!(TWISPI20, SPIM20, SERIAL20);
@@ -467,7 +491,7 @@ impl_twis!(TWISPI21, TWIS21, SERIAL21);
 impl_twis!(TWISPI22, TWIS22, SERIAL22);
 impl_twis!(TWISPI30, TWIS30, SERIAL30);
 
-// TIMERs
+// TIMER
 impl_timer!(TIMER00, TIMER00, TIMER00);
 // TIMER10 is dedicated to the radio. Do not implement.
 impl_timer!(TIMER20, TIMER20, TIMER20);
@@ -476,7 +500,7 @@ impl_timer!(TIMER22, TIMER22, TIMER22);
 impl_timer!(TIMER23, TIMER23, TIMER23);
 impl_timer!(TIMER24, TIMER24, TIMER24);
 
-// UARTEs
+// UARTE
 impl_uarte!(TWISPI20, UARTE20, SERIAL20);
 impl_uarte!(TWISPI21, UARTE21, SERIAL21);
 impl_uarte!(TWISPI22, UARTE22, SERIAL22);
