@@ -29,9 +29,13 @@ fn main() -> ! {
     const T: usize = 200000;
     for _ in 0..5 {
         led.set_high();
-        for _i in 0..T { cortex_m::asm::nop(); }
+        for _i in 0..T {
+            cortex_m::asm::nop();
+        }
         led.set_low();
-        for _i in 0..T { cortex_m::asm::nop(); }
+        for _i in 0..T {
+            cortex_m::asm::nop();
+        }
     }
 
     let mut wdt_config = wdt::Config::default();

@@ -331,7 +331,7 @@ embassy_hal_internal::peripherals! {
     TIMER00,
 
     // TIMER10 is dedicated to the radio. Do not implement.
-    
+
     TIMER20,
     TIMER21,
     TIMER22,
@@ -454,7 +454,7 @@ impl_pwm!(PWM20, PWM20, PWM20);
 impl_pwm!(PWM21, PWM21, PWM21);
 impl_pwm!(PWM22, PWM22, PWM22);
 
-// SAADC 
+// SAADC
 // NOTE: SAADC uses "pin" abstraction, not "AIN"
 impl_saadc_input!(P1_04, 1, 4);
 impl_saadc_input!(P1_05, 1, 5);
@@ -505,7 +505,6 @@ impl_uarte!(TWISPI20, UARTE20, SERIAL20);
 impl_uarte!(TWISPI21, UARTE21, SERIAL21);
 impl_uarte!(TWISPI22, UARTE22, SERIAL22);
 impl_uarte!(TWISPI30, UARTE30, SERIAL30);
-
 
 #[cfg(feature = "_ns")]
 impl_wdt!(WDT, WDT31, WDT31, 0);

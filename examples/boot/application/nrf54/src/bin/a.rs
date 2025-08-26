@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 #![macro_use]
-
 // TODO FIXME
 #![allow(unused)]
 
@@ -13,10 +12,10 @@ use embassy_embedded_hal::adapter::BlockingAsync;
 use embassy_executor::Spawner;
 use embassy_nrf::gpio::{Input, Level, Output, OutputDrive, Pull};
 use embassy_nrf::nvmc::Nvmc;
-use embassy_nrf::{peripherals, Peri};
-use embassy_time::Timer;
 use embassy_nrf::wdt::{self, Watchdog};
+use embassy_nrf::{peripherals, Peri};
 use embassy_sync::mutex::Mutex;
+use embassy_time::Timer;
 use panic_reset as _;
 
 #[cfg(feature = "skip-include")]
@@ -30,7 +29,7 @@ async fn main(spawner: Spawner) {
     #[cfg(feature = "defmt")]
     defmt::info!("Running!");
 
-    // nRF54l15 PDK 
+    // nRF54l15 PDK
     // LED 0
     let mut led = Output::new(p.P2_09, Level::Low, OutputDrive::Standard);
     // Buttom 0
@@ -55,7 +54,6 @@ async fn main(spawner: Spawner) {
     //     }
     // };
     spawner.spawn(watchdog_task(p.WDT0)).unwrap();
-
 
     let nvmc = Nvmc::new(p.RRAMC);
     let nvmc = Mutex::new(BlockingAsync::new(nvmc));
@@ -92,7 +90,7 @@ async fn main(spawner: Spawner) {
 pub async fn watchdog_task(wdt: Peri<'static, peripherals::WDT0>) {
     #[cfg(feature = "defmt")]
     defmt::trace!("watchdog_task::Launch");
-    
+
     let wdt_config = wdt::Config::try_new(&wdt).unwrap();
 
     let period = (wdt_config.timeout_ticks / 2) as u64;
@@ -112,4 +110,3 @@ pub async fn watchdog_task(wdt: Peri<'static, peripherals::WDT0>) {
         wdt_handle.pet();
     }
 }
-
