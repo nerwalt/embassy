@@ -319,6 +319,17 @@ embassy_hal_internal::peripherals! {
     // TEMP
     TEMP,
 
+    // TIMERs
+    TIMER00,
+
+    // TIMER10 is dedicated to the radio. Do not implement.
+    
+    TIMER20,
+    TIMER21,
+    TIMER22,
+    TIMER23,
+    TIMER24,
+
     // TWI/SPI
     SPI00,
     TWISPI20,
@@ -455,6 +466,22 @@ impl_twis!(TWISPI20, TWIS20, SERIAL20);
 impl_twis!(TWISPI21, TWIS21, SERIAL21);
 impl_twis!(TWISPI22, TWIS22, SERIAL22);
 impl_twis!(TWISPI30, TWIS30, SERIAL30);
+
+// TIMERs
+impl_timer!(TIMER00, TIMER00, TIMER00);
+// TIMER10 is dedicated to the radio. Do not implement.
+impl_timer!(TIMER20, TIMER20, TIMER20);
+impl_timer!(TIMER21, TIMER21, TIMER21);
+impl_timer!(TIMER22, TIMER22, TIMER22);
+impl_timer!(TIMER23, TIMER23, TIMER23);
+impl_timer!(TIMER24, TIMER24, TIMER24);
+
+// UARTEs
+impl_uarte!(TWISPI20, UARTE20, SERIAL20);
+impl_uarte!(TWISPI21, UARTE21, SERIAL21);
+impl_uarte!(TWISPI22, UARTE22, SERIAL22);
+impl_uarte!(TWISPI30, UARTE30, SERIAL30);
+
 
 #[cfg(feature = "_ns")]
 impl_wdt!(WDT, WDT31, WDT31, 0);

@@ -72,11 +72,14 @@ compile_error!("feature `lfxo-pins-as-gpio` is only valid for nRF53 series chips
 pub(crate) mod fmt;
 pub(crate) mod util;
 
+#[cfg(feature = "_nrf54l")]
+pub(crate) mod compat_nrf54l;
+
 #[cfg(feature = "_time-driver")]
 mod time_driver;
 
-#[cfg(not(feature = "_nrf54l"))] // TODO
 #[cfg(not(feature = "_nrf51"))]
+#[cfg_attr(feature = "_nrf54l", path = "buffered_uarte_nrf54l.rs")]
 pub mod buffered_uarte;
 #[cfg(not(feature = "_nrf54l"))] // TODO
 #[cfg(not(feature = "_nrf51"))]
@@ -150,13 +153,11 @@ pub mod spim;
 pub mod spis;
 #[cfg(not(any(feature = "_nrf5340-app", feature = "_nrf91")))]
 pub mod temp;
-#[cfg(not(feature = "_nrf54l"))] // TODO
 pub mod timer;
 #[cfg(not(feature = "_nrf51"))]
 pub mod twim;
 #[cfg(not(feature = "_nrf51"))]
 pub mod twis;
-#[cfg(not(feature = "_nrf54l"))] // TODO
 #[cfg(not(feature = "_nrf51"))]
 pub mod uarte;
 #[cfg(not(feature = "_nrf54l"))] // TODO
