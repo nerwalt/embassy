@@ -206,7 +206,6 @@ pub const FORCE_COPY_BUFFER_SIZE: usize = 1024;
 pub const FLASH_SIZE: usize = 1536 * 1024;
 
 embassy_hal_internal::peripherals! {
-<<<<<<< HEAD
     // GPIOTE
     GPIOTE20_CH0,
     GPIOTE20_CH1,
@@ -222,8 +221,6 @@ embassy_hal_internal::peripherals! {
     GPIOTE30_CH2,
     GPIOTE30_CH3,
 
-=======
->>>>>>> 8808b6334 (Adding SPI support)
     // GPIO port P0
     P0_00,
     P0_01,
