@@ -335,6 +335,7 @@ embassy_hal_internal::peripherals! {
     WDT1,
 }
 
+// GPIO port P0
 impl_pin!(P0_00, 0, 0);
 impl_pin!(P0_01, 0, 1);
 impl_pin!(P0_02, 0, 2);
@@ -343,6 +344,7 @@ impl_pin!(P0_04, 0, 4);
 impl_pin!(P0_05, 0, 5);
 impl_pin!(P0_06, 0, 6);
 
+// GPIO port P1
 impl_pin!(P1_00, 1, 0);
 impl_pin!(P1_01, 1, 1);
 impl_pin!(P1_02, 1, 2);
@@ -361,6 +363,7 @@ impl_pin!(P1_14, 1, 14);
 impl_pin!(P1_15, 1, 15);
 impl_pin!(P1_16, 1, 16);
 
+// GPIO port P2
 impl_pin!(P2_00, 2, 0);
 impl_pin!(P2_01, 2, 1);
 impl_pin!(P2_02, 2, 2);
@@ -440,6 +443,18 @@ impl_spis!(TWISPI20, SPIS20, SERIAL20);
 impl_spis!(TWISPI21, SPIS21, SERIAL21);
 impl_spis!(TWISPI22, SPIS22, SERIAL22);
 impl_spis!(TWISPI30, SPIS30, SERIAL30);
+
+// TWIM
+impl_twim!(TWISPI20, TWIM20, SERIAL20);
+impl_twim!(TWISPI21, TWIM21, SERIAL21);
+impl_twim!(TWISPI22, TWIM22, SERIAL22);
+impl_twim!(TWISPI30, TWIM30, SERIAL30);
+
+// TWIS
+impl_twis!(TWISPI20, TWIS20, SERIAL20);
+impl_twis!(TWISPI21, TWIS21, SERIAL21);
+impl_twis!(TWISPI22, TWIS22, SERIAL22);
+impl_twis!(TWISPI30, TWIS30, SERIAL30);
 
 #[cfg(feature = "_ns")]
 impl_wdt!(WDT, WDT31, WDT31, 0);
