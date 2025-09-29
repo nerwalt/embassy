@@ -87,6 +87,8 @@ pub mod egu;
 pub mod gpio;
 #[cfg(feature = "gpiote")]
 pub mod gpiote;
+#[cfg(feature = "_nrf54l")]
+pub mod grtc;
 #[cfg(not(feature = "_nrf54l"))] // TODO
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
 pub mod i2s;
@@ -1104,6 +1106,16 @@ pub fn init(config: config::Config) -> Peripherals {
         // When enabling the DC/DC regulator, the device checks if an inductor is connected to the DCC pin.
         // If an inductor is not detected, the device remains in LDO mode"
         pac::REGULATORS.vregmain().dcdcen().write(|w| w.set_val(true));
+    }
+
+    #[cfg(feature = "_nrf54l")]
+    {
+        // nRF54L: lock the MCU domain to 128 MHz as required by MPSL integration.
+        let pll = pac::OSCILLATORS.pll();
+        pll.freq().write(|w| w.set_freq(pac::oscillators::vals::Freq::CK128M));
+        while pll.currentfreq().read().currentfreq() != pac::oscillators::vals::Currentfreq::CK128M {
+            core::hint::spin_loop();
+        }
     }
 
     // Init GPIOTE
