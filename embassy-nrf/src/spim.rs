@@ -6,7 +6,7 @@ use core::future::poll_fn;
 use core::marker::PhantomData;
 #[cfg(feature = "_nrf52832_anomaly_109")]
 use core::sync::atomic::AtomicU8;
-use core::sync::atomic::{compiler_fence, Ordering};
+use core::sync::atomic::{Ordering, compiler_fence};
 use core::task::Poll;
 
 use embassy_embedded_hal::SetConfig;
@@ -19,7 +19,7 @@ pub use pac::spim::vals::Order as BitOrder;
 pub use pac::spim::vals::{Frequency, Order as BitOrder};
 
 use crate::chip::{EASY_DMA_SIZE, FORCE_COPY_BUFFER_SIZE};
-use crate::gpio::{self, convert_drive, AnyPin, OutputDrive, Pin as GpioPin, PselBits, SealedPin as _};
+use crate::gpio::{self, AnyPin, OutputDrive, Pin as GpioPin, PselBits, SealedPin as _, convert_drive};
 use crate::interrupt::typelevel::Interrupt;
 use crate::pac::gpio::vals as gpiovals;
 use crate::pac::spim::vals;
@@ -127,13 +127,16 @@ impl<T: Instance> interrupt::typelevel::Handler<T::Interrupt> for InterruptHandl
 }
 
 /// SPIM driver.
-pub struct Spim<'d, T: Instance> {
-    _p: Peri<'d, T>,
+pub struct Spim<'d> {
+    r: pac::spim::Spim,
+    irq: interrupt::Interrupt,
+    state: &'static State,
+    _p: PhantomData<&'d ()>,
 }
 
-impl<'d, T: Instance> Spim<'d, T> {
+impl<'d> Spim<'d> {
     /// Create a new SPIM driver.
-    pub fn new(
+    pub fn new<T: Instance>(
         spim: Peri<'d, T>,
         _irq: impl interrupt::typelevel::Binding<T::Interrupt, InterruptHandler<T>> + 'd,
         sck: Peri<'d, impl GpioPin>,
@@ -145,7 +148,7 @@ impl<'d, T: Instance> Spim<'d, T> {
     }
 
     /// Create a new SPIM driver, capable of TX only (MOSI only).
-    pub fn new_txonly(
+    pub fn new_txonly<T: Instance>(
         spim: Peri<'d, T>,
         _irq: impl interrupt::typelevel::Binding<T::Interrupt, InterruptHandler<T>> + 'd,
         sck: Peri<'d, impl GpioPin>,
@@ -156,7 +159,7 @@ impl<'d, T: Instance> Spim<'d, T> {
     }
 
     /// Create a new SPIM driver, capable of RX only (MISO only).
-    pub fn new_rxonly(
+    pub fn new_rxonly<T: Instance>(
         spim: Peri<'d, T>,
         _irq: impl interrupt::typelevel::Binding<T::Interrupt, InterruptHandler<T>> + 'd,
         sck: Peri<'d, impl GpioPin>,
@@ -167,7 +170,7 @@ impl<'d, T: Instance> Spim<'d, T> {
     }
 
     /// Create a new SPIM driver, capable of TX only (MOSI only), without SCK pin.
-    pub fn new_txonly_nosck(
+    pub fn new_txonly_nosck<T: Instance>(
         spim: Peri<'d, T>,
         _irq: impl interrupt::typelevel::Binding<T::Interrupt, InterruptHandler<T>> + 'd,
         mosi: Peri<'d, impl GpioPin>,
@@ -176,8 +179,8 @@ impl<'d, T: Instance> Spim<'d, T> {
         Self::new_inner(spim, None, None, Some(mosi.into()), config)
     }
 
-    fn new_inner(
-        spim: Peri<'d, T>,
+    fn new_inner<T: Instance>(
+        _spim: Peri<'d, T>,
         sck: Option<Peri<'d, AnyPin>>,
         miso: Option<Peri<'d, AnyPin>>,
         mosi: Option<Peri<'d, AnyPin>>,
@@ -229,7 +232,12 @@ impl<'d, T: Instance> Spim<'d, T> {
         // Enable SPIM instance.
         r.enable().write(|w| w.set_enable(vals::Enable::ENABLED));
 
-        let mut spim = Self { _p: spim };
+        let mut spim = Self {
+            r: T::regs(),
+            irq: T::Interrupt::IRQ,
+            state: T::state(),
+            _p: PhantomData {},
+        };
 
         // Apply runtime peripheral configuration
         Self::set_config(&mut spim, &config).unwrap();
@@ -246,7 +254,7 @@ impl<'d, T: Instance> Spim<'d, T> {
     fn prepare_dma_transfer(&mut self, rx: *mut [u8], tx: *const [u8], offset: usize, length: usize) {
         compiler_fence(Ordering::SeqCst);
 
-        let r = T::regs();
+        let r = self.r;
 
         fn xfer_params(ptr: u32, total: usize, offset: usize, length: usize) -> (u32, usize) {
             if total > offset {
@@ -290,7 +298,7 @@ impl<'d, T: Instance> Spim<'d, T> {
 
         #[cfg(feature = "_nrf52832_anomaly_109")]
         if offset == 0 {
-            let s = T::state();
+            let s = self.state;
 
             r.events_started().write_value(0);
 
@@ -323,7 +331,7 @@ impl<'d, T: Instance> Spim<'d, T> {
         }
 
         // Wait for 'end' event.
-        while T::regs().events_end().read() == 0 {}
+        while self.r.events_end().read() == 0 {}
 
         compiler_fence(Ordering::SeqCst);
     }
@@ -359,7 +367,7 @@ impl<'d, T: Instance> Spim<'d, T> {
         #[cfg(feature = "_nrf52832_anomaly_109")]
         if offset == 0 {
             poll_fn(|cx| {
-                let s = T::state();
+                let s = self.state;
 
                 s.waker.register(cx.waker());
 
@@ -370,8 +378,8 @@ impl<'d, T: Instance> Spim<'d, T> {
 
         // Wait for 'end' event.
         poll_fn(|cx| {
-            T::state().waker.register(cx.waker());
-            if T::regs().events_end().read() != 0 {
+            self.state.waker.register(cx.waker());
+            if self.r.events_end().read() != 0 {
                 return Poll::Ready(());
             }
 
@@ -474,9 +482,9 @@ impl<'d, T: Instance> Spim<'d, T> {
 
     #[cfg(feature = "_nrf52832_anomaly_109")]
     fn nrf52832_dma_workaround_status(&mut self) -> Poll<()> {
-        let r = T::regs();
+        let r = self.r;
         if r.events_started().read() != 0 {
-            let s = T::state();
+            let s = self.state;
 
             // Handle the first "fake" transmission
             r.events_started().write_value(0);
@@ -495,14 +503,14 @@ impl<'d, T: Instance> Spim<'d, T> {
     }
 }
 
-impl<'d, T: Instance> Drop for Spim<'d, T> {
+impl<'d> Drop for Spim<'d> {
     fn drop(&mut self) {
         trace!("spim drop");
 
         // TODO check for abort, wait for xxxstopped
 
         // disable!
-        let r = T::regs();
+        let r = self.r;
         r.enable().write(|w| w.set_enable(vals::Enable::DISABLED));
 
         gpio::deconfigure_pin(r.psel().sck().read());
@@ -510,7 +518,7 @@ impl<'d, T: Instance> Drop for Spim<'d, T> {
         gpio::deconfigure_pin(r.psel().mosi().read());
 
         // Disable all events interrupts
-        T::Interrupt::disable();
+        cortex_m::peripheral::NVIC::mask(self.irq);
 
         trace!("spim drop: done");
     }
@@ -570,7 +578,7 @@ macro_rules! impl_spim {
 mod eh02 {
     use super::*;
 
-    impl<'d, T: Instance> embedded_hal_02::blocking::spi::Transfer<u8> for Spim<'d, T> {
+    impl<'d> embedded_hal_02::blocking::spi::Transfer<u8> for Spim<'d> {
         type Error = Error;
         fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {
             self.blocking_transfer_in_place(words)?;
@@ -578,7 +586,7 @@ mod eh02 {
         }
     }
 
-    impl<'d, T: Instance> embedded_hal_02::blocking::spi::Write<u8> for Spim<'d, T> {
+    impl<'d> embedded_hal_02::blocking::spi::Write<u8> for Spim<'d> {
         type Error = Error;
 
         fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
@@ -595,11 +603,11 @@ impl embedded_hal_1::spi::Error for Error {
     }
 }
 
-impl<'d, T: Instance> embedded_hal_1::spi::ErrorType for Spim<'d, T> {
+impl<'d> embedded_hal_1::spi::ErrorType for Spim<'d> {
     type Error = Error;
 }
 
-impl<'d, T: Instance> embedded_hal_1::spi::SpiBus<u8> for Spim<'d, T> {
+impl<'d> embedded_hal_1::spi::SpiBus<u8> for Spim<'d> {
     fn flush(&mut self) -> Result<(), Self::Error> {
         Ok(())
     }
@@ -621,7 +629,7 @@ impl<'d, T: Instance> embedded_hal_1::spi::SpiBus<u8> for Spim<'d, T> {
     }
 }
 
-impl<'d, T: Instance> embedded_hal_async::spi::SpiBus<u8> for Spim<'d, T> {
+impl<'d> embedded_hal_async::spi::SpiBus<u8> for Spim<'d> {
     async fn flush(&mut self) -> Result<(), Error> {
         Ok(())
     }
@@ -643,11 +651,11 @@ impl<'d, T: Instance> embedded_hal_async::spi::SpiBus<u8> for Spim<'d, T> {
     }
 }
 
-impl<'d, T: Instance> SetConfig for Spim<'d, T> {
+impl<'d> SetConfig for Spim<'d> {
     type Config = Config;
     type ConfigError = ConfigError;
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
-        let r = T::regs();
+        let r = self.r;
 
         #[cfg(feature = "_nrf54l")]
         {

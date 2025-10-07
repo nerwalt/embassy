@@ -18,7 +18,7 @@
 use core::marker::PhantomData;
 use core::ptr::NonNull;
 
-use embassy_hal_internal::{impl_peripheral, Peri, PeripheralType};
+use embassy_hal_internal::{Peri, PeripheralType, impl_peripheral};
 
 use crate::pac::common::{Reg, RW, W};
 #[allow(unused_imports)]
@@ -121,6 +121,14 @@ impl<'d, G: Group> PpiGroup<'d, G> {
         let n = self.g.number();
         let inst = self.g.inst();
         Task::from_reg(regs(inst).tasks_chg(n).dis())
+    }
+}
+impl<G: Group> PpiGroup<'static, G> {
+    /// Persist this group's configuration for the rest of the program's lifetime. This method
+    /// should be preferred over [`core::mem::forget()`] because the `'static` bound prevents
+    /// accidental reuse of the underlying peripheral.
+    pub fn persist(self) {
+        core::mem::forget(self);
     }
 }
 
