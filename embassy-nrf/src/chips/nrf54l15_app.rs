@@ -198,6 +198,8 @@ pub mod pac {
     };
 }
 
+use pac::*;
+
 /// The maximum buffer size that the EasyDMA can send/recv in one operation.
 pub const EASY_DMA_SIZE: usize = (1 << 16) - 1;
 pub const FORCE_COPY_BUFFER_SIZE: usize = 1024;
@@ -557,6 +559,7 @@ impl_wdt!(WDT, WDT31, WDT31, 0);
 impl_wdt!(WDT0, WDT31, WDT31, 0);
 #[cfg(feature = "_s")]
 impl_wdt!(WDT1, WDT30, WDT30, 1);
+
 // DPPI00 channels
 impl_ppi_channel!(PPI00_CH0, DPPIC00, 0 => configurable);
 impl_ppi_channel!(PPI00_CH1, DPPIC00, 1 => configurable);
@@ -613,6 +616,97 @@ impl_ppi_group!(PPI20_GROUP5, DPPIC20, 5);
 impl_ppi_group!(PPI30_GROUP0, DPPIC30, 0);
 impl_ppi_group!(PPI30_GROUP1, DPPIC30, 1);
 
+
+// PPI bridge channels
+// PPIB00 channels
+impl_ppib_channel!(PPIB00_CH0, PPIB00, 0);
+impl_ppib_channel!(PPIB00_CH1, PPIB00, 1);
+impl_ppib_channel!(PPIB00_CH2, PPIB00, 2);
+impl_ppib_channel!(PPIB00_CH3, PPIB00, 3);
+impl_ppib_channel!(PPIB00_CH4, PPIB00, 4);
+impl_ppib_channel!(PPIB00_CH5, PPIB00, 5);
+impl_ppib_channel!(PPIB00_CH6, PPIB00, 6);
+impl_ppib_channel!(PPIB00_CH7, PPIB00, 7);
+
+// PPIB01 channels
+impl_ppib_channel!(PPIB01_CH0, PPIB01, 0);
+impl_ppib_channel!(PPIB01_CH1, PPIB01, 1);
+impl_ppib_channel!(PPIB01_CH2, PPIB01, 2);
+impl_ppib_channel!(PPIB01_CH3, PPIB01, 3);
+impl_ppib_channel!(PPIB01_CH4, PPIB01, 4);
+impl_ppib_channel!(PPIB01_CH5, PPIB01, 5);
+impl_ppib_channel!(PPIB01_CH6, PPIB01, 6);
+impl_ppib_channel!(PPIB01_CH7, PPIB01, 7);
+
+// PPIB10 channels
+impl_ppib_channel!(PPIB10_CH0, PPIB10, 0);
+impl_ppib_channel!(PPIB10_CH1, PPIB10, 1);
+impl_ppib_channel!(PPIB10_CH2, PPIB10, 2);
+impl_ppib_channel!(PPIB10_CH3, PPIB10, 3);
+impl_ppib_channel!(PPIB10_CH4, PPIB10, 4);
+impl_ppib_channel!(PPIB10_CH5, PPIB10, 5);
+impl_ppib_channel!(PPIB10_CH6, PPIB10, 6);
+impl_ppib_channel!(PPIB10_CH7, PPIB10, 7);
+
+// PPIB11 channels
+impl_ppib_channel!(PPIB11_CH0, PPIB11, 0);
+impl_ppib_channel!(PPIB11_CH1, PPIB11, 1);
+impl_ppib_channel!(PPIB11_CH2, PPIB11, 2);
+impl_ppib_channel!(PPIB11_CH3, PPIB11, 3);
+impl_ppib_channel!(PPIB11_CH4, PPIB11, 4);
+impl_ppib_channel!(PPIB11_CH5, PPIB11, 5);
+impl_ppib_channel!(PPIB11_CH6, PPIB11, 6);
+impl_ppib_channel!(PPIB11_CH7, PPIB11, 7);
+impl_ppib_channel!(PPIB11_CH8, PPIB11, 8);
+impl_ppib_channel!(PPIB11_CH9, PPIB11, 9);
+impl_ppib_channel!(PPIB11_CH10, PPIB11, 10);
+impl_ppib_channel!(PPIB11_CH11, PPIB11, 11);
+impl_ppib_channel!(PPIB11_CH12, PPIB11, 12);
+impl_ppib_channel!(PPIB11_CH13, PPIB11, 13);
+impl_ppib_channel!(PPIB11_CH14, PPIB11, 14);
+impl_ppib_channel!(PPIB11_CH15, PPIB11, 15);
+
+// PPIB20 channels
+impl_ppib_channel!(PPIB20_CH0, PPIB20, 0);
+impl_ppib_channel!(PPIB20_CH1, PPIB20, 1);
+impl_ppib_channel!(PPIB20_CH2, PPIB20, 2);
+impl_ppib_channel!(PPIB20_CH3, PPIB20, 3);
+impl_ppib_channel!(PPIB20_CH4, PPIB20, 4);
+impl_ppib_channel!(PPIB20_CH5, PPIB20, 5);
+impl_ppib_channel!(PPIB20_CH6, PPIB20, 6);
+impl_ppib_channel!(PPIB20_CH7, PPIB20, 7);
+
+// PPIB21 channels
+impl_ppib_channel!(PPIB21_CH0, PPIB21, 0);
+impl_ppib_channel!(PPIB21_CH1, PPIB21, 1);
+impl_ppib_channel!(PPIB21_CH2, PPIB21, 2);
+impl_ppib_channel!(PPIB21_CH3, PPIB21, 3);
+impl_ppib_channel!(PPIB21_CH4, PPIB21, 4);
+impl_ppib_channel!(PPIB21_CH5, PPIB21, 5);
+impl_ppib_channel!(PPIB21_CH6, PPIB21, 6);
+impl_ppib_channel!(PPIB21_CH7, PPIB21, 7);
+impl_ppib_channel!(PPIB21_CH8, PPIB21, 8);
+impl_ppib_channel!(PPIB21_CH9, PPIB21, 9);
+impl_ppib_channel!(PPIB21_CH10, PPIB21, 10);
+impl_ppib_channel!(PPIB21_CH11, PPIB21, 11);
+impl_ppib_channel!(PPIB21_CH12, PPIB21, 12);
+impl_ppib_channel!(PPIB21_CH13, PPIB21, 13);
+impl_ppib_channel!(PPIB21_CH14, PPIB21, 14);
+impl_ppib_channel!(PPIB21_CH15, PPIB21, 15);
+
+// PPIB22 channels
+impl_ppib_channel!(PPIB22_CH0, PPIB22, 0);
+impl_ppib_channel!(PPIB22_CH1, PPIB22, 1);
+impl_ppib_channel!(PPIB22_CH2, PPIB22, 2);
+impl_ppib_channel!(PPIB22_CH3, PPIB22, 3);
+
+// PPIB30 channels
+impl_ppib_channel!(PPIB30_CH0, PPIB30, 0);
+impl_ppib_channel!(PPIB30_CH1, PPIB30, 1);
+impl_ppib_channel!(PPIB30_CH2, PPIB30, 2);
+impl_ppib_channel!(PPIB30_CH3, PPIB30, 3);
+
+// Timers
 impl_timer!(TIMER00, TIMER00, TIMER00);
 impl_timer!(TIMER10, TIMER10, TIMER10);
 impl_timer!(TIMER20, TIMER20, TIMER20);
@@ -640,7 +734,7 @@ impl_spim!(
     SERIAL00,
     SPIM00,
     SERIAL00,
-    match pac::OSCILLATORS_S.pll().currentfreq().read().currentfreq() {
+    match OSCILLATORS_S.pll().currentfreq().read().currentfreq() {
         pac::oscillators::vals::Currentfreq::CK128M => 128_000_000,
         pac::oscillators::vals::Currentfreq::CK64M => 64_000_000,
         _ => unreachable!(),
