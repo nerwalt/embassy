@@ -1069,7 +1069,7 @@ impl_pwm!(PWM21, PWM21, PWM21);
 impl_pwm!(PWM22, PWM22, PWM22);
 
 // Radio
-impl_radio!(RADIO, RADIO, RADIO_0);
+// impl_radio!(RADIO, RADIO, RADIO_0);
 // impl_radio!(RADIO, RADIO, RADIO_1);
 
 // SAADC

@@ -637,7 +637,8 @@ impl<'d> SimplePwm<'d> {
                 pin.conf().write(|w| {
                     w.set_dir(gpiovals::Dir::OUTPUT);
                     w.set_input(gpiovals::Input::DISCONNECT);
-                    w.set_drive(gpiovals::Drive::S0S1);
+                    // TODO FIXME
+                    // w.set_drive(gpiovals::Drive::S0S1);
                 });
             }
             r.psel().out(i).write_value(ch.psel_bits());
