@@ -113,10 +113,11 @@ foreach_adc!(
             }
 
             fn enable() {
-                ADC4::regs().isr().write(|w| w.set_adrdy(true));
-                ADC4::regs().cr().modify(|w| w.set_aden(true));
-                while !ADC4::regs().isr().read().adrdy() {}
-                ADC4::regs().isr().write(|w| w.set_adrdy(true));
+                if !ADC4::regs().cr().read().aden()  || !ADC4::regs().isr().read().adrdy() {
+                    ADC4::regs().isr().write(|w| w.set_adrdy(true));
+                    ADC4::regs().cr().modify(|w| w.set_aden(true));
+                    while !ADC4::regs().isr().read().adrdy() {}
+                }
             }
 
             fn start() {
@@ -127,11 +128,15 @@ foreach_adc!(
             }
 
             fn stop() {
-                if ADC4::regs().cr().read().adstart() && !ADC4::regs().cr().read().addis() {
-                    ADC4::regs().cr().modify(|reg| {
-                        reg.set_adstp(true);
-                    });
+                let cr = ADC4::regs().cr().read();
+                if cr.adstart() {
+                    ADC4::regs().cr().modify(|w| w.set_adstp(true));
                     while ADC4::regs().cr().read().adstart() {}
+                }
+
+                if cr.aden() || cr.adstart() {
+                    ADC4::regs().cr().modify(|w| w.set_addis(true));
+                    while ADC4::regs().cr().read().aden() {}
                 }
 
                 // Reset configuration.
